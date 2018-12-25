@@ -15,3 +15,9 @@ https://min-api.cryptocompare.com/data/price?fsym=AGI&tsyms=BTC,ETH,USD
 5. Contract leverages Oraclize contract to get the Prices from outside of Blockchain
 
 6. Need to load the contract with the sufficient fund to execute the Oraclize Queries
+
+
+
+Note: 
+Current version of Truffle doesnt support Solidity 0.5.0 and above.
+Deployed the contract directlty from Remix IDE

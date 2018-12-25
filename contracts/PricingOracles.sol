@@ -4,18 +4,18 @@ import "github.com/oraclize/ethereum-api/oraclizeAPI_0.5.sol";
 contract PricingOracles is usingOraclize {
 
    string public AGIPrice;
-   event LogConstructorInitiated(string nextStep);
-   event LogPriceUpdated(string price);
-   event LogNewOraclizeQuery(string description);
-   event UpdateURL (string url);
-   event UpdateOwner (address owner);
-   
+
    string public sURL;
    uint public scheduleInSec;
    address payable public owner;
 
+   event PriceUpdated(string price);
+   event NewOraclizeQuery(string description);
+   event URLUpdated (string url);
+   event NewOwner (address owner);
+   event NewSchedule(uint256 recurrenceInSec);
+   
    constructor(string memory _sURL, uint256 _frequencyInSec) public {
-       emit LogConstructorInitiated("Constructor was initiated. Call 'updatePrice()' to send the Oraclize Query.");
        sURL = _sURL;
        scheduleInSec = _frequencyInSec;
        owner = msg.sender;
@@ -24,25 +24,26 @@ contract PricingOracles is usingOraclize {
    function updateURL(string memory _sURL) public {
        require(msg.sender == owner);
        sURL = _sURL;
-       emit UpdateURL(sURL);
+       emit URLUpdated(sURL);
    }
 
    function updateSchedule(uint256 _frequencyInSec) public {
        require(msg.sender == owner);
        scheduleInSec = _frequencyInSec;
+       emit NewSchedule(_frequencyInSec);
    }
    
    function updateOwner(address payable _owner) public {
        require(msg.sender == owner);
        owner = _owner;
-       emit UpdateOwner(_owner);
+       emit NewOwner(_owner);
    }
 
    function __callback(bytes32 myid, string memory result) public {
        if (msg.sender != oraclize_cbAddress()) revert();
        AGIPrice = result;
        
-       emit LogPriceUpdated(result);
+       emit PriceUpdated(result);
        
        if(scheduleInSec > 0) {
             updatePrice();
@@ -55,11 +56,11 @@ contract PricingOracles is usingOraclize {
        
        if (oraclize_getPrice("URL") > address(this).balance) {
            
-           emit LogNewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
+           emit NewOraclizeQuery("Oraclize query was NOT sent, not enough fee");
        
        } else {
            
-           emit LogNewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
+           emit NewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
            
            if(scheduleInSec == 0) {
                 oraclize_query("URL", sURL);
@@ -67,7 +68,6 @@ contract PricingOracles is usingOraclize {
            else {
                oraclize_query(scheduleInSec, "URL", sURL);
            }
-           //"json(https://api.pro.coinbase.com/products/ETH-USD/ticker).price"
        }
    }
    
