@@ -9,6 +9,8 @@ contract PricingOracles is usingOraclize {
    uint public scheduleInSec;
    address payable public owner;
 
+   mapping(bytes32=>bool) public forcibleQueryIds;
+
    event PriceUpdated(string price);
    event NewOraclizeQuery(string description);
    event URLUpdated (string url);
@@ -45,12 +47,12 @@ contract PricingOracles is usingOraclize {
        
        emit PriceUpdated(result);
        
-       if(scheduleInSec > 0) {
-            updatePrice();
+       if(scheduleInSec > 0 && forcibleQueryIds[myid] == false) {
+            requestForUpdatePrice(false);
         }
    }
 
-   function updatePrice() public {
+   function requestForUpdatePrice(bool _forcibleExecution) public {
        
        if(!(msg.sender == owner || msg.sender == oraclize_cbAddress())) revert();
        
@@ -62,8 +64,9 @@ contract PricingOracles is usingOraclize {
            
            emit NewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
            
-           if(scheduleInSec == 0) {
-                oraclize_query("URL", sURL);
+           if(scheduleInSec == 0 || _forcibleExecution == true) {
+                bytes32 queryId = oraclize_query("URL", sURL);
+                forcibleQueryIds[queryId] = true;
            }
            else {
                oraclize_query(scheduleInSec, "URL", sURL);
