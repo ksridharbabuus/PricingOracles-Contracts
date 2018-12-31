@@ -12,7 +12,7 @@ contract PricingOracles is usingOraclize {
    mapping(bytes32=>bool) public forcibleQueryIds;
 
    event PriceUpdated(string price);
-   event NewOraclizeQuery(bytes32 queryId, string description);
+   event NewOraclizeQuery(string description);
    event URLUpdated (string url);
    event NewOwner (address owner);
    event NewSchedule(uint256 recurrenceInSec);
@@ -50,6 +50,10 @@ contract PricingOracles is usingOraclize {
        if(scheduleInSec > 0 && forcibleQueryIds[myid] == false) {
             requestForUpdatePrice(false);
         }
+        
+       if(forcibleQueryIds[myid] == true) {
+           delete forcibleQueryIds[myid];
+       }
    }
 
    function requestForUpdatePrice(bool _forcibleExecution) public {
@@ -58,7 +62,7 @@ contract PricingOracles is usingOraclize {
        
        if (oraclize_getPrice("URL") > address(this).balance) {
            
-           emit NewOraclizeQuery(0, "Oraclize query was NOT sent, not enough fee");
+           emit NewOraclizeQuery("Oraclize query was NOT sent, not enough fee");
        
        } else {
            
@@ -72,7 +76,7 @@ contract PricingOracles is usingOraclize {
                queryId = oraclize_query(scheduleInSec, "URL", sURL);
            }
            
-           emit NewOraclizeQuery(queryId, "Oraclize query was sent, standing by for the answer..");
+           emit NewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
            
        }
    }
